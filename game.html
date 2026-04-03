@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>XO Game</title>
+
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial;
+  background: #0f172a;
+  color: white;
+  text-align: center;
+}
+
+h1 {
+  margin-top: 20px;
+}
+
+input {
+  padding: 10px;
+  margin: 5px;
+  border-radius: 8px;
+  border: none;
+}
+
+button {
+  padding: 10px 20px;
+  border-radius: 8px;
+  border: none;
+  background: #6366f1;
+  color: white;
+  cursor: pointer;
+}
+
+/* ✅ FIXED BOARD (NO SPACE ISSUE) */
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, min(100px, 28vw));
+  gap: 12px;
+  justify-content: center;
+  margin-top: 30px;
+}
+
+/* ✅ FIXED CELL SIZE */
+.cell {
+  width: min(100px, 28vw);
+  height: min(100px, 28vw);
+  background: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 36px;
+  cursor: pointer;
+  border-radius: 12px;
+  transition: 0.2s;
+}
+
+.cell:hover {
+  transform: scale(1.05);
+  background: #334155;
+}
+
+.x {
+  color: white;
+}
+
+.o {
+  color: #ef4444;
+}
+
+.win {
+  background: rgba(34,197,94,0.3);
+}
+
+/* popup */
+.popup {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: none;
+  justify-content: center;
+  align-items: center;
+  background: rgba(0,0,0,0.6);
+}
+
+.popup-card {
+  background: #1e293b;
+  padding: 30px;
+  border-radius: 15px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>XO Game 🎮</h1>
+
+<input id="p1" placeholder="Player X Name">
+<input id="p2" placeholder="Player O Name">
+<br>
+<button onclick="startGame()">Start Game</button>
+
+<p id="status"></p>
+
+<div class="board" id="board" style="display:none;">
+  <div class="cell" onclick="play(0)"></div>
+  <div class="cell" onclick="play(1)"></div>
+  <div class="cell" onclick="play(2)"></div>
+  <div class="cell" onclick="play(3)"></div>
+  <div class="cell" onclick="play(4)"></div>
+  <div class="cell" onclick="play(5)"></div>
+  <div class="cell" onclick="play(6)"></div>
+  <div class="cell" onclick="play(7)"></div>
+  <div class="cell" onclick="play(8)"></div>
+</div>
+
+<div class="popup" id="popup">
+  <div class="popup-card">
+    <h2 id="result"></h2>
+    <button onclick="restart()">Play Again</button>
+  </div>
+</div>
+
+<audio id="clickSound" src="https://www.soundjay.com/button/button-16.mp3"></audio>
+<audio id="winSound" src="https://www.soundjay.com/human/applause-8.mp3"></audio>
+
+<script>
+let board = ["","","","","","","","",""];
+let current = "X";
+let playerX = "Player X";
+let playerO = "Player O";
+
+function startGame(){
+  playerX = document.getElementById("p1").value || "Player X";
+  playerO = document.getElementById("p2").value || "Player O";
+
+  document.getElementById("board").style.display = "grid";
+  document.getElementById("status").innerText = playerX + "'s Turn";
+}
+
+function play(i){
+  if(board[i] !== "") return;
+
+  document.getElementById("clickSound").play();
+
+  board[i] = current;
+  update();
+
+  let winner = checkWinner();
+
+  if(winner){
+    showResult(winner);
+    return;
+  }
+
+  current = current === "X" ? "O" : "X";
+
+  document.getElementById("status").innerText =
+    (current === "X" ? playerX : playerO) + "'s Turn";
+}
+
+function update(){
+  document.querySelectorAll(".cell").forEach((cell,i)=>{
+    cell.innerText = board[i];
+
+    cell.classList.remove("x","o");
+
+    if(board[i] === "X") cell.classList.add("x");
+    if(board[i] === "O") cell.classList.add("o");
+  });
+}
+
+function checkWinner(){
+  const wins = [
+    [0,1,2],[3,4,5],[6,7,8],
+    [0,3,6],[1,4,7],[2,5,8],
+    [0,4,8],[2,4,6]
+  ];
+
+  for(let w of wins){
+    let [a,b,c] = w;
+    if(board[a] && board[a]===board[b] && board[a]===board[c]){
+
+      document.querySelectorAll(".cell")[a].classList.add("win");
+      document.querySelectorAll(".cell")[b].classList.add("win");
+      document.querySelectorAll(".cell")[c].classList.add("win");
+
+      return board[a];
+    }
+  }
+
+  if(!board.includes("")) return "Draw";
+
+  return null;
+}
+
+function showResult(winner){
+  let text = document.getElementById("result");
+
+  if(winner === "Draw"){
+    text.innerText = "It's a Draw";
+  } else {
+    let name = winner === "X" ? playerX : playerO;
+    text.innerText = name + " Won 🎉";
+
+    confetti();
+    document.getElementById("winSound").play();
+  }
+
+  document.getElementById("popup").style.display = "flex";
+}
+
+function restart(){
+  board = ["","","","","","","","",""];
+  current = "X";
+
+  document.querySelectorAll(".cell").forEach(c=>{
+    c.classList.remove("win");
+  });
+
+  update();
+
+  document.getElementById("popup").style.display = "none";
+  document.getElementById("status").innerText = playerX + "'s Turn";
+}
+</script>
+
+</body>
+</html>
